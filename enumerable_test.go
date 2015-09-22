@@ -1,6 +1,10 @@
 package enumerable
 
-import "testing"
+import (
+	// "fmt"
+	"reflect"
+	"testing"
+)
 
 type TestEnumerable struct {
 	in   interface{}
@@ -86,4 +90,87 @@ func TestEnumerableSome(t *testing.T) {
 	if err == nil {
 		t.Errorf("Some(%d) = %v, want error\n", 10, res)
 	}
+}
+
+// TestEnumerableMap tests the enumerable package's
+// 'Map' function. Map executes a function on each
+// element of a slice and stores the result of that function
+// in a new slice
+func TestEnumerableMap(t *testing.T) {
+	testCases := []TestEnumerable{
+		TestEnumerable{
+			[]string{"hello", "world", "letter"},
+			[]string{"hello_map", "world_map", "letter_map"},
+		},
+		TestEnumerable{
+			[]string{"dog", "cats", "jacket"},
+			[]int{3, 4, 6},
+		},
+		TestEnumerable{
+			[]string{"", "cat", "dog", "fish", "horse"},
+			[]string{"cat", "catdog", "dogfish", "fishhorse", "horse"},
+		},
+	}
+
+	f1 := func(i int, val string) string {
+		return val + "_map"
+	}
+
+	f2 := func(i int, val string) int {
+		return len(val)
+	}
+
+	f3 := func(i int, val string) string {
+		if i < reflect.ValueOf(testCases[2].in).Len()-1 {
+			return val + reflect.ValueOf(testCases[2].in).Index(i+1).String()
+		}
+		return val
+	}
+
+	got, err := Map(testCases[0].in, f1)
+	if err != nil {
+		t.Errorf("%s\n", err)
+	}
+
+	if slicesEqual(got, testCases[0].want) {
+		t.Errorf("%d: Map(%v) = %s, want = %s\n", 1, testCases[0].in, got, testCases[0].want)
+	}
+
+	got, err = Map(testCases[1].in, f2)
+	if err != nil {
+		t.Errorf("%s\n", err)
+	}
+
+	if slicesEqual(got, testCases[1].want) {
+		t.Errorf("%d: Map(%v) = %d, want = %d\n", 2, testCases[1].in, got, testCases[1].want)
+	}
+
+	got, err = Map(testCases[2].in, f3)
+	if err != nil {
+		t.Errorf("%s\n", err)
+	}
+
+	if slicesEqual(got, testCases[2].want) {
+		t.Errorf("%d: Map(%v) = %s, want = %s\n", 3, testCases[2].in, got, testCases[2].want)
+	}
+
+	res, err := Map(10, f1)
+	if err == nil {
+		t.Errorf("Map(%d) = %v, want error\n", 10, res)
+	}
+}
+
+func slicesEqual(s1, s2 interface{}) bool {
+	slice1 := reflect.ValueOf(s1)
+	slice2 := reflect.ValueOf(s2)
+	if slice1.Len() != slice2.Len() {
+		return false
+	}
+
+	for index := 0; index < slice1.Len(); index++ {
+		if slice1.Index(index) != slice2.Index(index) {
+			return false
+		}
+	}
+	return true
 }
