@@ -11,7 +11,7 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("Enumerable Error: %s\n", e.message)
+	return fmt.Sprintf("Enumerable Error: %s", e.message)
 }
 
 func (e *Error) set(message string) {
@@ -43,6 +43,18 @@ func rescue2(results *interface{}, err *Error) {
 		}
 
 		*results = nil
+	}
+}
+
+func rescue3(err *Error) {
+	if v := recover(); v != nil {
+		err = &Error{}
+		switch x := v.(type) {
+		case string:
+			err.set(x)
+		case error:
+			err.set(x.Error())
+		}
 	}
 }
 
@@ -145,7 +157,7 @@ func Map(slice, function interface{}) (results interface{}, err *Error) {
 	default:
 		results = nil
 		err = &Error{}
-		(*err).set("A slice needs to be the first parameter of Some.")
+		(*err).set("A slice needs to be the first parameter of Map.")
 	}
 
 	return results, err

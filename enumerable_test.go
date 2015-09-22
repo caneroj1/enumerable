@@ -1,7 +1,6 @@
 package enumerable
 
 import (
-	// "fmt"
 	"reflect"
 	"testing"
 )
