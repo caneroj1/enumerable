@@ -129,8 +129,8 @@ func Map(slice, function interface{}) (results interface{}, err *Error) {
 				s.Index(0),
 			}
 			output := reflect.ValueOf(function).Call(input)
-			results = make([]interface{}, 0)
-			results = append(results.([]interface{}), output[0].Interface())
+			results = make([]interface{}, s.Len())
+			reflect.ValueOf(results).Index(0).Set(output[0])
 
 			for idx := 1; idx < s.Len(); idx++ {
 				input := []reflect.Value{
@@ -139,7 +139,7 @@ func Map(slice, function interface{}) (results interface{}, err *Error) {
 				}
 
 				output := reflect.ValueOf(function).Call(input)
-				results = append(results.([]interface{}), output[0].Interface())
+				reflect.ValueOf(results).Index(idx).Set(output[0])
 			}
 		}
 	default:
