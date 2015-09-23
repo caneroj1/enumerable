@@ -162,3 +162,38 @@ func Map(slice, function interface{}) (results interface{}, err *Error) {
 
 	return results, err
 }
+
+// Select accepts a slice and a function that accepts an index and a value and returns a bool.
+// Select executes that function on each value in the slice and stores the value at index in a new slice if the function returns true.
+func Select(slice, function interface{}) (results interface{}, err *Error) {
+	defer rescue2(&results, err)
+
+	switch reflect.TypeOf(slice).Kind() {
+	case reflect.Slice:
+		s := reflect.ValueOf(slice)
+
+		if s.Len() < 1 {
+			results = nil
+		} else {
+			results = make([]interface{}, 0)
+
+			for idx := 0; idx < s.Len(); idx++ {
+				input := []reflect.Value{
+					reflect.ValueOf(idx),
+					s.Index(idx),
+				}
+
+				output := reflect.ValueOf(function).Call(input)
+				if output[0].Interface().(bool) {
+					results = append(results.([]interface{}), s.Index(idx))
+				}
+			}
+		}
+	default:
+		results = nil
+		err = &Error{}
+		(*err).set("A slice needs to be the first parameter of Select.")
+	}
+
+	return results, err
+}

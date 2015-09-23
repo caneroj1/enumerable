@@ -2,6 +2,7 @@ package enumerable
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -131,7 +132,7 @@ func TestEnumerableMap(t *testing.T) {
 		t.Errorf("%s\n", err)
 	}
 
-	if slicesEqual(got, testCases[0].want) {
+	if !slicesEqual(got, testCases[0].want) {
 		t.Errorf("%d: Map(%v) = %s, want = %s\n", 1, testCases[0].in, got, testCases[0].want)
 	}
 
@@ -140,7 +141,7 @@ func TestEnumerableMap(t *testing.T) {
 		t.Errorf("%s\n", err)
 	}
 
-	if slicesEqual(got, testCases[1].want) {
+	if !slicesEqual(got, testCases[1].want) {
 		t.Errorf("%d: Map(%v) = %d, want = %d\n", 2, testCases[1].in, got, testCases[1].want)
 	}
 
@@ -149,13 +150,71 @@ func TestEnumerableMap(t *testing.T) {
 		t.Errorf("%s\n", err)
 	}
 
-	if slicesEqual(got, testCases[2].want) {
+	if !slicesEqual(got, testCases[2].want) {
 		t.Errorf("%d: Map(%v) = %s, want = %s\n", 3, testCases[2].in, got, testCases[2].want)
 	}
 
 	res, err := Map(10, f1)
 	if err == nil {
 		t.Errorf("Map(%d) = %v, want error\n", 10, res)
+	}
+}
+
+// TestEnumerableSelect tests the enumerable package's
+// 'Select' function. Select executes a function on each
+// element of a slice and adds that element to a new slice
+// if that function returns true.
+func TestEnumerableSelect(t *testing.T) {
+	testCases := []TestEnumerable{
+		TestEnumerable{
+			[]string{"hello", "world", "letter"},
+			[]string{"hello", "world"},
+		},
+		TestEnumerable{
+			[]string{"dog", "cats", "jacket"},
+			[]string{"dog"},
+		},
+		TestEnumerable{
+			[]int{1, 2, -1, 5, 4, 8, 27},
+			[]int{2, 4, 8},
+		},
+	}
+
+	f1 := func(idx int, val string) bool {
+		return len(val) <= 5
+	}
+
+	f2 := func(idx int, val string) bool {
+		return strings.Contains(val, "d")
+	}
+
+	f3 := func(idx int, val int) bool {
+		return (val % 2) == 0
+	}
+
+	res, err := Select(testCases[0].in, f1)
+	if err != nil {
+		t.Errorf("Received an error: %s", err)
+	}
+	if !slicesEqual(res, testCases[0].want) {
+		t.Errorf("%d: Select(%v) = %v, want = %v", 1, testCases[0].in, res, testCases[0].want)
+	}
+
+	res, err = Select(testCases[1].in, f2)
+	if err != nil {
+		t.Errorf("Received an error: %s", err)
+	}
+	if !slicesEqual(res, testCases[1].want) {
+		t.Errorf("%d: Select(%v) = %v, want = %v", 2, testCases[1].in, res, testCases[1].want)
+	}
+
+	res, err = Select(testCases[2].in, f3)
+
+	if err != nil {
+		t.Errorf("Received an error: %s", err)
+	}
+	if !slicesEqual(res, testCases[2].want) {
+		t.Errorf("%d: Select(%v) = %v, want = %v", 3, testCases[2].in, res, testCases[2].want)
 	}
 }
 
@@ -167,8 +226,19 @@ func slicesEqual(s1, s2 interface{}) bool {
 	}
 
 	for index := 0; index < slice1.Len(); index++ {
-		if slice1.Index(index) != slice2.Index(index) {
-			return false
+		v1 := slice1.Index(index).Elem()
+		v2 := slice2.Index(index)
+		switch v1.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			val := v1.Int()
+			if val != v2.Int() {
+				return false
+			}
+		case reflect.String:
+			val := v1.String()
+			if val != v2.String() {
+				return false
+			}
 		}
 	}
 	return true
