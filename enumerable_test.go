@@ -218,6 +218,53 @@ func TestEnumerableSelect(t *testing.T) {
 	}
 }
 
+// TestEnumerableEach tests the enumerable package's
+// 'Each' function. Each executes a function on each
+// element of a slice.
+func TestEnumerableEach(t *testing.T) {
+	testCases := []TestEnumerable{
+		TestEnumerable{
+			[]string{"hello", "world", "letter"},
+			"letter",
+		},
+		TestEnumerable{
+			[]string{"dog", "cats", "jacket"},
+			6,
+		},
+	}
+
+	longestString := ""
+	f1 := func(idx int, val string) {
+		if len(val) >= len(longestString) {
+			longestString = val
+		}
+	}
+
+	numberOfLetters := 0
+	f2 := func(idx int, val string) {
+		if len(val) >= numberOfLetters {
+			numberOfLetters = len(val)
+		}
+	}
+
+	err := Each(testCases[0].in, f1)
+	if err != nil {
+		t.Errorf("Received an error: %s", err)
+	}
+	if longestString != testCases[0].want {
+		t.Errorf("%d: Each(%v) = %v, want = %v", 1, testCases[0].in, longestString, testCases[0].want)
+	}
+
+	err = Each(testCases[1].in, f2)
+	if err != nil {
+		t.Errorf("Received an error: %s", err)
+	}
+	if numberOfLetters != testCases[1].want {
+		t.Errorf("%d: Each(%v) = %v, want = %v", 2, testCases[1].in, numberOfLetters, testCases[1].want)
+	}
+
+}
+
 func slicesEqual(s1, s2 interface{}) bool {
 	slice1 := reflect.ValueOf(s1)
 	slice2 := reflect.ValueOf(s2)

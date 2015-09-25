@@ -197,3 +197,30 @@ func Select(slice, function interface{}) (results interface{}, err *Error) {
 
 	return results, err
 }
+
+// Each accepts a slice and a function that accepts an index and a value and returns a bool.
+// Each executes that function on each value in the slice.
+func Each(slice, function interface{}) (err *Error) {
+	defer rescue3(err)
+
+	switch reflect.TypeOf(slice).Kind() {
+	case reflect.Slice:
+		s := reflect.ValueOf(slice)
+
+		if s.Len() > 0 {
+			for idx := 0; idx < s.Len(); idx++ {
+				input := []reflect.Value{
+					reflect.ValueOf(idx),
+					s.Index(idx),
+				}
+
+				reflect.ValueOf(function).Call(input)
+			}
+		}
+	default:
+		err = &Error{}
+		(*err).set("A slice needs to be the first parameter of Select.")
+	}
+
+	return err
+}
